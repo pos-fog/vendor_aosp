@@ -150,6 +150,10 @@ endif
 # Bootanimation
 include vendor/aosp/config/bootanimation.mk
 
+# Gamespace
+PRODUCT_PACKAGES += \
+    GameSpace
+
 # Charger
 PRODUCT_PACKAGES += \
     charger_res_images \
