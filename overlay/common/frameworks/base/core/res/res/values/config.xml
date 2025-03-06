@@ -357,6 +357,10 @@
         <item>device_personalization_services/NowPlaying__on_demand_retry_fingerprinter_install=true</item>
         <item>device_personalization_services/NowPlaying__youtube_export_enabled=true</item>
 
+        <!-- Nearby -->
+        <item>nearby/nearby_enable_presence_broadcast_legacy=false</item>
+        <item>nearby/nearby_support_test_app=false</item>
+
         <!-- Media Provider -->
         <item>mediaprovider/cloud_media_feature_enabled=true</item>
         <item>mediaprovider/allowed_cloud_providers=com.google.android.apps.photos.cloudpicker</item>
