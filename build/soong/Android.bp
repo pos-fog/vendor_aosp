@@ -309,6 +309,7 @@ soong_config_module_type {
         "target_health_charging_control_supports_toggle",
         "target_health_charging_control_supports_bypass",
         "target_health_charging_control_supports_deadline",
+        "target_health_charging_control_supports_limit",
     ],
     value_variables: [
         "target_health_charging_control_charging_path",
@@ -330,6 +331,9 @@ health_charging_control {
         },
         target_health_charging_control_supports_deadline: {
             cppflags: ["-DHEALTH_CHARGING_CONTROL_SUPPORTS_DEADLINE"],
+        },
+        target_health_charging_control_supports_limit: {
+            cppflags: ["-DHEALTH_CHARGING_CONTROL_SUPPORTS_LIMIT"],
         },
         target_health_charging_control_charging_path: {
             cppflags: ["-DHEALTH_CHARGING_CONTROL_CHARGING_PATH=\"%s\""],
@@ -443,30 +447,6 @@ surfaceflinger_qcom_extensions {
         qcom_display_headers_namespace: {
             cppflags: ["-DQCOM_UM_FAMILY"],
             header_libs: ["//%s:display_intf_headers"],
-        },
-    },
-}
-
-soong_config_module_type {
-    name: "qti_vibrator_hal",
-    module_type: "cc_defaults",
-    config_namespace: "customQcomVars",
-    bool_variables: ["qti_vibrator_use_effect_stream"],
-    value_variables: ["qti_vibrator_effect_lib"],
-    properties: [
-        "cppflags",
-        "shared_libs",
-    ],
-}
-
-qti_vibrator_hal {
-    name: "qti_vibrator_hal_defaults",
-    soong_config_variables: {
-        qti_vibrator_use_effect_stream: {
-            cppflags: ["-DUSE_EFFECT_STREAM"],
-        },
-        qti_vibrator_effect_lib: {
-            shared_libs: ["%s"],
         },
     },
 }
