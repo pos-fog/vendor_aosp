@@ -41,6 +41,9 @@
 #                                          For example, for ARM devices,
 #                                          use zImage-dtb instead of zImage.
 #
+#   BOARD_KERNEL_APPEND_DTBS           = List of DTBs to be appended to the kernel image,
+#                                          wildcard is allowed for filename.
+#
 #   BOARD_DTB_CFG                      = Path to a mkdtboimg config file for dtb.img
 #
 #   BOARD_DTBO_CFG                     = Path to a mkdtboimg config file
@@ -84,6 +87,8 @@ VARIANT_DEFCONFIG := $(TARGET_KERNEL_VARIANT_CONFIG)
 SELINUX_DEFCONFIG := $(TARGET_KERNEL_SELINUX_CONFIG)
 # dtb generation - optional
 TARGET_MERGE_DTBS_WILDCARD ?= *
+# recovery modules.load fallback - optional
+BOARD_RECOVERY_KERNEL_MODULES_LOAD ?= $(BOARD_RECOVERY_RAMDISK_KERNEL_MODULES_LOAD)
 
 ## Internal variables
 DTC := $(HOST_OUT_EXECUTABLES)/dtc
@@ -547,7 +552,7 @@ $(TARGET_PREBUILT_INT_KERNEL): $(KERNEL_CONFIG) $(DEPMOD) $(DTC) $(KERNEL_MODULE
 					if [ -n "$$p" ]; then echo $$p; else echo "ERROR: $$m from RECOVERY_KERNEL_MODULES was not found" 1>&2 && exit 1; fi; \
 				done); \
 				[ $$? -ne 0 ] && exit 1; \
-				($(call build-image-kernel-modules-custom,$$recovery_modules,$(KERNEL_RECOVERY_MODULES_OUT),,$(KERNEL_RECOVERY_DEPMOD_STAGING_DIR),$(BOARD_RECOVERY_RAMDISK_KERNEL_MODULES_LOAD),,,)) || exit "$$?"; \
+				($(call build-image-kernel-modules-custom,$$recovery_modules,$(KERNEL_RECOVERY_MODULES_OUT),,$(KERNEL_RECOVERY_DEPMOD_STAGING_DIR),$(BOARD_RECOVERY_KERNEL_MODULES_LOAD),,,)) || exit "$$?"; \
 			) \
 		fi
 
@@ -650,7 +655,7 @@ ifeq ($(BOARD_USES_QCOM_MERGE_DTBS_SCRIPT),true)
 	$(hide) find $(DTBS_OUT) -type f -name "*.dtb*" | xargs rm -f
 	mv $(DTB_OUT)/arch/$(KERNEL_ARCH)/boot/dts/vendor/*/*.dtb $(DTB_OUT)/arch/$(KERNEL_ARCH)/boot/dts/vendor/*/*.dtbo $(DTBS_BASE)/
 	PATH=$(abspath $(HOST_OUT_EXECUTABLES)):$${PATH} python3 $(BUILD_TOP)/vendor/aosp/build/tools/merge_dtbs.py --base $(DTBS_BASE) --techpack $(DTB_OUT)/arch/$(KERNEL_ARCH)/boot/dts/vendor/qcom --out $(DTBS_OUT)
-	cat $(shell find $(DTB_OUT)/out -type f -name "${TARGET_MERGE_DTBS_WILDCARD}.dtb" | sort) > $@
+	cat $(shell find $(DTBS_OUT) -type f -name "${TARGET_MERGE_DTBS_WILDCARD}.dtb" | sort) > $@
 else
 	cat $(shell find $(DTB_OUT)/arch/$(KERNEL_ARCH)/boot/dts -type f -name "*.dtb" | sort) > $@
 endif # BOARD_USES_QCOM_MERGE_DTBS_SCRIPT
@@ -682,14 +687,37 @@ endif
 
 ## Install it
 
+ifeq ($(or $(FULL_RECOVERY_KERNEL_BUILD), $(FULL_KERNEL_BUILD)),true)
+
+# Append DTBs to kernel image
+# $(1): output directory path (The value passed to O=)
+# $(2): output kernel image path
+define append-dtbs-to-kernel-image
+	$(hide) if grep -q '^CONFIG_OF=y' $(1)/.config; then \
+			$(if $(BOARD_KERNEL_APPEND_DTBS),\
+				echo "Appending DTBs to kernel image";\
+				$(foreach dtb,$(BOARD_KERNEL_APPEND_DTBS),\
+					cat `find $(1)/arch/$(KERNEL_ARCH)/boot/dts/$(dir $(dtb)) -maxdepth 1 -type f -name "$(notdir $(dtb))"` >> $(2);\
+				)\
+			)\
+			true;\
+		fi
+endef
+
+endif # FULL_RECOVERY_KERNEL_BUILD or FULL_KERNEL_BUILD
+
 ifeq ($(NEEDS_KERNEL_COPY),true)
 $(INSTALLED_KERNEL_TARGET): $(KERNEL_BIN)
 	$(transform-prebuilt-to-target)
+	$(if $(filter true,$(FULL_KERNEL_BUILD)),\
+		$(call append-dtbs-to-kernel-image,$(KERNEL_OUT),$@))
 endif
 
 ifeq ($(RECOVERY_KERNEL_COPY),true)
 $(INSTALLED_RECOVERY_KERNEL_TARGET): $(RECOVERY_BIN)
 	$(transform-prebuilt-to-target)
+	$(if $(filter true,$(FULL_RECOVERY_KERNEL_BUILD)),\
+		$(call append-dtbs-to-kernel-image,$(RECOVERY_KERNEL_OUT),$@))
 endif
 
 .PHONY: recovery-kernel
