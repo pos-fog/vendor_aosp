@@ -11,7 +11,7 @@ $(call inherit-product-if-exists, vendor/pixel-framework/config.mk)
 $(call inherit-product-if-exists, vendor/google/overlays/ThemeIcons/config.mk)
 
 # Additional prebuilt packages
-$(call inherit-product-if-exists, vendor/extras/extras.mk)
+$(call inherit-product-if-exists, vendor/additional-prebuilts/extras.mk)
 
 PRODUCT_BRAND ?= PixelOS
 
