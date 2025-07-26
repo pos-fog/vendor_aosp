@@ -1,0 +1,8 @@
+cc_library_shared {
+    name: "RemovePackages",
+    overrides: [
+        "Maps",
+        "PrebuiltGmail",
+    ],
+    compile_multilib: "64",
+}

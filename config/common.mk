@@ -221,6 +221,10 @@ PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
     system/bin/procmem
 endif
 
+# Remove packages
+PRODUCT_PACKAGES += \
+    RemovePackages
+
 # Root
 PRODUCT_PACKAGES += \
     adb_root
